@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>แผนงาน Content + เอกสาร</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
+
+  :root{
+    --bg: #FFFFFF;
+    --sidebar: #FBFBFA;
+    --text: #37352F;
+    --text-light: #8A8683;
+    --border: #E9E9E7;
+    --hover: #F1F1EF;
+    --purple-bg:#F2E9FB; --purple-fg:#6940A5;
+    --teal-bg:#DDF3EC;   --teal-fg:#0F7B6C;
+    --red-fg:#E03E3E; --yellow-fg:#DFAB01; --green-fg:#4CAA57;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-lg: 0 4px 16px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.08);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    font-family:'Inter', ui-sans-serif, -apple-system, "Segoe UI", sans-serif;
+    color:var(--text);
+    background:var(--bg);
+    height:100vh;
+    overflow:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{ display:flex; height:100vh; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    width:230px; min-width:230px;
+    background:var(--sidebar);
+    border-right:1px solid var(--border);
+    padding:16px 10px;
+    display:flex; flex-direction:column;
+    gap:2px;
+  }
+  .workspace{
+    display:flex; align-items:center; gap:8px;
+    padding:6px 8px 14px 8px;
+    font-weight:700; font-size:14px;
+  }
+  .workspace .dot{
+    width:22px; height:22px; border-radius:6px;
+    background:linear-gradient(135deg,#6940A5,#0F7B6C);
+    flex-shrink:0;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:8px;
+    padding:6px 8px; border-radius:6px;
+    font-size:14px; color:var(--text);
+    cursor:pointer; user-select:none;
+    justify-content:space-between;
+  }
+  .nav-item:hover{ background:var(--hover); }
+  .nav-item.active{ background:var(--hover); font-weight:600; }
+  .nav-item .left{ display:flex; align-items:center; gap:8px; }
+  .nav-item .count{ font-size:11px; color:var(--text-light); }
+  .nav-section-label{
+    font-size:11px; font-weight:600; color:var(--text-light);
+    text-transform:uppercase; letter-spacing:0.04em;
+    padding:14px 8px 6px 8px;
+  }
+  .sidebar-foot{
+    margin-top:auto; padding:10px 8px; font-size:11px; color:var(--text-light);
+    border-top:1px solid var(--border);
+  }
+
+  /* ---------- Main ---------- */
+  .main{ flex:1; display:flex; flex-direction:column; min-width:0; }
+  .topbar{
+    padding:18px 28px 10px 28px;
+    display:flex; align-items:center; justify-content:space-between;
+    border-bottom:1px solid transparent;
+  }
+  .title-row{ display:flex; align-items:baseline; gap:10px; }
+  .page-title{ font-size:22px; font-weight:700; }
+  .page-sub{ font-size:12.5px; color:var(--text-light); margin-top:2px; }
+
+  .filters{
+    display:flex; gap:6px; padding:0 28px 14px 28px; align-items:center;
+  }
+  .chip{
+    font-size:12.5px; padding:5px 12px; border-radius:6px;
+    border:1px solid var(--border); background:#fff; color:var(--text-light);
+    cursor:pointer; font-weight:500;
+  }
+  .chip.active{ background:var(--text); color:#fff; border-color:var(--text); }
+  .search{
+    margin-left:auto; font-size:13px; border:1px solid var(--border);
+    border-radius:6px; padding:6px 10px; width:200px; outline:none;
+    background:#fff;
+  }
+  .search:focus{ border-color:#B9B9B6; }
+
+  /* ---------- Board ---------- */
+  .board-wrap{ flex:1; overflow-x:auto; overflow-y:hidden; padding: 4px 28px 20px 28px; }
+  .board{ display:flex; gap:16px; height:100%; min-height:0; }
+  .column{
+    width:272px; min-width:272px;
+    display:flex; flex-direction:column;
+    background:#FAFAF9; border-radius:10px;
+    padding:10px;
+    max-height: calc(100vh - 168px);
+  }
+  .column.drag-over{ background:#F1EEF9; outline:2px dashed #C9B8E8; }
+  .col-head{
+    display:flex; align-items:center; gap:6px;
+    padding:4px 4px 10px 4px; font-size:13px; font-weight:600;
+  }
+  .col-head .swatch{ width:8px; height:8px; border-radius:50%; }
+  .col-head .col-count{ color:var(--text-light); font-weight:500; margin-left:2px; }
+  .cards{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-bottom:4px; }
+  .cards::-webkit-scrollbar{ width:6px; }
+  .cards::-webkit-scrollbar-thumb{ background:#DDDBD8; border-radius:3px; }
+
+  .card{
+    background:#fff; border:1px solid var(--border); border-radius:8px;
+    padding:10px 12px; cursor:grab; box-shadow:var(--shadow);
+    display:flex; flex-direction:column; gap:7px;
+  }
+  .card:hover{ box-shadow:var(--shadow-lg); border-color:#D7D5D2; }
+  .card.dragging{ opacity:0.35; }
+  .card-title{ font-size:13.5px; font-weight:500; line-height:1.4; }
+  .tag-row{ display:flex; gap:5px; flex-wrap:wrap; }
+  .tag{
+    font-size:10.5px; font-weight:600; padding:2px 7px; border-radius:4px;
+    display:inline-flex; align-items:center; gap:4px;
+  }
+  .tag.content{ background:var(--purple-bg); color:var(--purple-fg); }
+  .tag.doc{ background:var(--teal-bg); color:var(--teal-fg); }
+  .card-meta{
+    display:flex; align-items:center; justify-content:space-between;
+    font-size:11.5px; color:var(--text-light);
+  }
+  .priority{ display:flex; align-items:center; gap:4px; font-weight:600; }
+  .priority .p-dot{ width:7px; height:7px; border-radius:50%; }
+  .p-high{ background:var(--red-fg); } .p-mid{ background:var(--yellow-fg); } .p-low{ background:var(--green-fg); }
+  .due{ font-weight:500; }
+  .due.overdue{ color:var(--red-fg); font-weight:700; }
+  .assignee{
+    width:20px; height:20px; border-radius:50%; background:#EDEBFA; color:#6940A5;
+    font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;
+  }
+
+  .add-card-btn{
+    font-size:12.5px; color:var(--text-light); padding:6px 6px; border-radius:6px;
+    cursor:pointer; display:flex; align-items:center; gap:5px;
+  }
+  .add-card-btn:hover{ background:var(--hover); color:var(--text); }
+
+  .quick-add{ display:none; flex-direction:column; gap:6px; background:#fff; border:1px solid var(--border);
+    border-radius:8px; padding:8px; box-shadow:var(--shadow); }
+  .quick-add.show{ display:flex; }
+  .quick-add input{ border:none; outline:none; font-size:13px; font-family:inherit; }
+  .quick-add .qa-actions{ display:flex; gap:6px; }
+  .qa-btn{ font-size:12px; padding:4px 10px; border-radius:5px; border:none; cursor:pointer; font-weight:600; }
+  .qa-btn.primary{ background:var(--text); color:#fff; }
+  .qa-btn.ghost{ background:transparent; color:var(--text-light); }
+
+  /* ---------- Modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(15,15,15,0.35);
+    display:none; align-items:center; justify-content:center; z-index:50;
+  }
+  .overlay.show{ display:flex; }
+  .modal{
+    width:420px; max-width:92vw; background:#fff; border-radius:12px;
+    box-shadow:var(--shadow-lg); padding:22px; display:flex; flex-direction:column; gap:14px;
+    max-height:86vh; overflow-y:auto;
+  }
+  .modal h3{ font-size:16px; }
+  .modal .close{ position:absolute; }
+  .field{ display:flex; flex-direction:column; gap:4px; }
+  .field label{ font-size:11.5px; color:var(--text-light); font-weight:600; text-transform:uppercase; letter-spacing:0.03em; }
+  .field input, .field select, .field textarea{
+    border:1px solid var(--border); border-radius:6px; padding:8px 10px; font-size:13.5px;
+    font-family:inherit; outline:none; background:#fff;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus{ border-color:#B9B9B6; }
+  .field textarea{ resize:vertical; min-height:60px; }
+  .row2{ display:flex; gap:10px; }
+  .row2 .field{ flex:1; }
+  .modal-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:4px; }
+  .btn{ font-size:13px; padding:8px 14px; border-radius:7px; border:none; cursor:pointer; font-weight:600; }
+  .btn.primary{ background:var(--text); color:#fff; }
+  .btn.danger{ background:#fff; color:var(--red-fg); border:1px solid #F3D2D2; }
+  .modal-title-input{
+    font-size:17px; font-weight:700; border:none; outline:none; font-family:inherit;
+    padding:2px 0;
+  }
+
+  .empty-hint{ font-size:12px; color:var(--text-light); padding:8px 4px; }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="sidebar">
+    <div class="workspace"><div class="dot"></div> แผนงานทีม</div>
+
+    <div class="nav-section-label">มุมมอง</div>
+    <div class="nav-item active" data-filter="all">
+      <div class="left">📋 งานทั้งหมด</div><div class="count" id="count-all">0</div>
+    </div>
+    <div class="nav-item" data-filter="Digital Content">
+      <div class="left">🎬 Digital Content</div><div class="count" id="count-content">0</div>
+    </div>
+    <div class="nav-item" data-filter="เอกสาร">
+      <div class="left">📄 งานเอกสาร</div><div class="count" id="count-doc">0</div>
+    </div>
+
+    <div class="nav-section-label">สรุป</div>
+    <div class="nav-item" style="cursor:default;">
+      <div class="left">🔴 เกินกำหนด</div><div class="count" id="count-overdue">0</div>
+    </div>
+
+    <div class="sidebar-foot">ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้</div>
+  </div>
+
+  <div class="main">
+    <div class="topbar">
+      <div>
+        <div class="title-row"><span class="page-title">แผนงาน Digital Content + เอกสาร</span></div>
+        <div class="page-sub" id="pageSub">รวมงานค้างทั้งหมดไว้ที่เดียว ลากการ์ดเพื่อเปลี่ยนสถานะ</div>
+      </div>
+    </div>
+
+    <div class="filters">
+      <div class="chip active" data-filter="all">ทั้งหมด</div>
+      <div class="chip" data-filter="Digital Content">🎬 Digital Content</div>
+      <div class="chip" data-filter="เอกสาร">📄 เอกสาร</div>
+      <input class="search" id="searchBox" placeholder="ค้นหางาน...">
+    </div>
+
+    <div class="board-wrap">
+      <div class="board" id="board"></div>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<script>
+const STATUSES = [
+  {key:"Backlog", label:"Backlog", color:"#B0AEAB"},
+  {key:"กำลังทำ", label:"กำลังทำ", color:"#DFAB01"},
+  {key:"รอตรวจ", label:"รอตรวจ", color:"#3B82C4"},
+  {key:"แก้ไข", label:"แก้ไข", color:"#E08A3D"},
+  {key:"เสร็จแล้ว", label:"เสร็จแล้ว", color:"#4CAA57"},
+];
+
+let tasks = [];
+let currentFilter = "all";
+let searchTerm = "";
+let draggedId = null;
+let storageOk = true;
+
+const uid = () => "t" + Math.random().toString(36).slice(2, 10);
+
+function seedTasks(){
+  return [
+    {id:uid(), title:"โพสต์โปรโมทแคมเปญเดือนสิงหาคม", type:"Digital Content", subtype:"Instagram Reels",
+     status:"กำลังทำ", priority:"สูง", assignee:"มด", dueDate: futureDate(3), notes:""},
+    {id:uid(), title:"สรุปงบประมาณไตรมาส 3", type:"เอกสาร", subtype:"รายงาน",
+     status:"แก้ไข", priority:"สูง", assignee:"เบล", dueDate: futureDate(-1), notes:"รอข้อมูลจากบัญชี"},
+    {id:uid(), title:"บทความ SEO หัวข้อ 'เทรนด์ปี 2026'", type:"Digital Content", subtype:"Website Article",
+     status:"Backlog", priority:"กลาง", assignee:"", dueDate:"", notes:""},
+    {id:uid(), title:"ร่างสัญญาผู้รับเหมาโครงการ A", type:"เอกสาร", subtype:"สัญญา",
+     status:"รอตรวจ", priority:"สูง", assignee:"บอส", dueDate: futureDate(1), notes:""},
+  ];
+}
+function futureDate(days){
+  const d = new Date(); d.setDate(d.getDate()+days);
+  return d.toISOString().slice(0,10);
+}
+
+async function loadTasks(){
+  try{
+    const res = await window.storage.get('planner-tasks', false);
+    if(res && res.value){ tasks = JSON.parse(res.value); }
+    else { tasks = seedTasks(); await saveTasks(); }
+  }catch(e){
+    tasks = seedTasks();
+  }
+  render();
+}
+async function saveTasks(){
+  try{
+    await window.storage.set('planner-tasks', JSON.stringify(tasks), false);
+  }catch(e){ storageOk = false; }
+}
+
+function initials(name){
+  if(!name) return "?";
+  return name.trim().slice(0,2);
+}
+function isOverdue(t){
+  if(!t.dueDate || t.status === "เสร็จแล้ว") return false;
+  return new Date(t.dueDate) < new Date(new Date().toDateString());
+}
+function fmtDate(d){
+  if(!d) return "";
+  const dt = new Date(d);
+  return dt.toLocaleDateString('th-TH', {day:'numeric', month:'short'});
+}
+
+function filteredTasks(){
+  return tasks.filter(t=>{
+    if(currentFilter !== "all" && t.type !== currentFilter) return false;
+    if(searchTerm && !t.title.toLowerCase().includes(searchTerm.toLowerCase())) return false;
+    return true;
+  });
+}
+
+function render(){
+  document.getElementById('count-all').textContent = tasks.length;
+  document.getElementById('count-content').textContent = tasks.filter(t=>t.type==="Digital Content").length;
+  document.getElementById('count-doc').textContent = tasks.filter(t=>t.type==="เอกสาร").length;
+  document.getElementById('count-overdue').textContent = tasks.filter(isOverdue).length;
+
+  const board = document.getElementById('board');
+  board.innerHTML = "";
+  const list = filteredTasks();
+
+  STATUSES.forEach(st=>{
+    const col = document.createElement('div');
+    col.className = 'column';
+    col.dataset.status = st.key;
+
+    const colTasks = list.filter(t=>t.status===st.key);
+
+    col.innerHTML = `
+      <div class="col-head">
+        <span class="swatch" style="background:${st.color}"></span>
+        ${st.label} <span class="col-count">${colTasks.length}</span>
+      </div>
+      <div class="cards" data-status="${st.key}"></div>
+      <div class="add-card-wrap"></div>
+    `;
+
+    const cardsEl = col.querySelector('.cards');
+    if(colTasks.length===0){
+      const hint = document.createElement('div');
+      hint.className = 'empty-hint';
+      hint.textContent = 'ไม่มีงาน';
+      cardsEl.appendChild(hint);
+    }
+    colTasks.forEach(t=> cardsEl.appendChild(renderCard(t)));
+
+    // drag events on column
+    cardsEl.addEventListener('dragover', e=>{
+      e.preventDefault();
+      col.classList.add('drag-over');
+    });
+    cardsEl.addEventListener('dragleave', ()=> col.classList.remove('drag-over'));
+    cardsEl.addEventListener('drop', e=>{
+      e.preventDefault();
+      col.classList.remove('drag-over');
+      if(draggedId){
+        const task = tasks.find(t=>t.id===draggedId);
+        if(task){ task.status = st.key; saveTasks(); render(); }
+      }
+    });
+
+    // quick add
+    const addWrap = col.querySelector('.add-card-wrap');
+    const addBtn = document.createElement('div');
+    addBtn.className = 'add-card-btn';
+    addBtn.innerHTML = '+ เพิ่มงาน';
+    const qa = document.createElement('div');
+    qa.className = 'quick-add';
+    qa.innerHTML = `<input type="text" placeholder="ชื่องาน แล้วกด Enter..." />`;
+    const qaInput = qa.querySelector('input');
+
+    addBtn.onclick = ()=>{
+      addBtn.style.display='none';
+      qa.classList.add('show');
+      qaInput.focus();
+    };
+    function commitAdd(){
+      const val = qaInput.value.trim();
+      if(val){
+        tasks.push({id:uid(), title:val, type:"Digital Content", subtype:"", status:st.key,
+          priority:"กลาง", assignee:"", dueDate:"", notes:""});
+        saveTasks();
+        render();
+      } else {
+        qa.classList.remove('show');
+        addBtn.style.display='flex';
+      }
+    }
+    qaInput.addEventListener('keydown', e=>{
+      if(e.key==='Enter'){ commitAdd(); }
+      if(e.key==='Escape'){ qa.classList.remove('show'); addBtn.style.display='flex'; }
+    });
+    qaInput.addEventListener('blur', ()=> setTimeout(commitAdd, 100));
+
+    addWrap.appendChild(addBtn);
+    addWrap.appendChild(qa);
+
+    board.appendChild(col);
+  });
+}
+
+function renderCard(t){
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.draggable = true;
+  card.dataset.id = t.id;
+
+  const typeTag = t.type === "Digital Content"
+    ? `<span class="tag content">🎬 Content${t.subtype ? " · "+escapeHtml(t.subtype) : ""}</span>`
+    : `<span class="tag doc">📄 เอกสาร${t.subtype ? " · "+escapeHtml(t.subtype) : ""}</span>`;
+
+  const pClass = t.priority === "สูง" ? "p-high" : t.priority === "ต่ำ" ? "p-low" : "p-mid";
+  const overdue = isOverdue(t);
+
+  card.innerHTML = `
+    <div class="card-title">${escapeHtml(t.title)}</div>
+    <div class="tag-row">${typeTag}</div>
+    <div class="card-meta">
+      <span class="priority"><span class="p-dot ${pClass}"></span>${t.priority}</span>
+      ${t.dueDate ? `<span class="due ${overdue?'overdue':''}">${overdue?'⚠ ':''}${fmtDate(t.dueDate)}</span>` : '<span></span>'}
+      ${t.assignee ? `<span class="assignee">${escapeHtml(initials(t.assignee))}</span>` : '<span></span>'}
+    </div>
+  `;
+
+  card.addEventListener('dragstart', ()=>{ draggedId = t.id; card.classList.add('dragging'); });
+  card.addEventListener('dragend', ()=>{ draggedId = null; card.classList.remove('dragging'); });
+  card.addEventListener('click', ()=> openModal(t.id));
+
+  return card;
+}
+
+function escapeHtml(s){
+  return (s||"").replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- Modal ----------
+function openModal(id){
+  const t = tasks.find(x=>x.id===id);
+  if(!t) return;
+  const overlay = document.getElementById('overlay');
+  const modal = document.getElementById('modal');
+
+  modal.innerHTML = `
+    <input class="modal-title-input" id="m-title" value="${escapeHtml(t.title)}" />
+    <div class="row2">
+      <div class="field">
+        <label>ประเภทงาน</label>
+        <select id="m-type">
+          <option value="Digital Content" ${t.type==="Digital Content"?"selected":""}>🎬 Digital Content</option>
+          <option value="เอกสาร" ${t.type==="เอกสาร"?"selected":""}>📄 เอกสาร</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>หมวดหมู่ย่อย</label>
+        <input id="m-subtype" value="${escapeHtml(t.subtype||"")}" placeholder="เช่น Facebook, สัญญา" />
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>สถานะ</label>
+        <select id="m-status">
+          ${STATUSES.map(s=>`<option value="${s.key}" ${t.status===s.key?"selected":""}>${s.label}</option>`).join("")}
+        </select>
+      </div>
+      <div class="field">
+        <label>ความสำคัญ</label>
+        <select id="m-priority">
+          <option value="สูง" ${t.priority==="สูง"?"selected":""}>สูง</option>
+          <option value="กลาง" ${t.priority==="กลาง"?"selected":""}>กลาง</option>
+          <option value="ต่ำ" ${t.priority==="ต่ำ"?"selected":""}>ต่ำ</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>ผู้รับผิดชอบ</label>
+        <input id="m-assignee" value="${escapeHtml(t.assignee||"")}" placeholder="ชื่อ" />
+      </div>
+      <div class="field">
+        <label>กำหนดส่ง</label>
+        <input type="date" id="m-due" value="${t.dueDate||""}" />
+      </div>
+    </div>
+    <div class="field">
+      <label>หมายเหตุ / ลิงก์</label>
+      <textarea id="m-notes" placeholder="รายละเอียดเพิ่มเติม...">${escapeHtml(t.notes||"")}</textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn danger" id="m-delete">ลบงาน</button>
+      <button class="btn primary" id="m-save">บันทึก</button>
+    </div>
+  `;
+
+  overlay.classList.add('show');
+
+  document.getElementById('m-save').onclick = ()=>{
+    t.title = document.getElementById('m-title').value.trim() || t.title;
+    t.type = document.getElementById('m-type').value;
+    t.subtype = document.getElementById('m-subtype').value.trim();
+    t.status = document.getElementById('m-status').value;
+    t.priority = document.getElementById('m-priority').value;
+    t.assignee = document.getElementById('m-assignee').value.trim();
+    t.dueDate = document.getElementById('m-due').value;
+    t.notes = document.getElementById('m-notes').value.trim();
+    saveTasks();
+    closeModal();
+    render();
+  };
+  document.getElementById('m-delete').onclick = ()=>{
+    tasks = tasks.filter(x=>x.id!==id);
+    saveTasks();
+    closeModal();
+    render();
+  };
+}
+function closeModal(){
+  document.getElementById('overlay').classList.remove('show');
+}
+document.getElementById('overlay').addEventListener('click', e=>{
+  if(e.target.id === 'overlay') closeModal();
+});
+document.addEventListener('keydown', e=>{
+  if(e.key === 'Escape') closeModal();
+});
+
+// ---------- Filters ----------
+document.querySelectorAll('.nav-item[data-filter], .chip[data-filter]').forEach(el=>{
+  el.addEventListener('click', ()=>{
+    currentFilter = el.dataset.filter;
+    document.querySelectorAll('.nav-item[data-filter]').forEach(x=>x.classList.toggle('active', x.dataset.filter===currentFilter));
+    document.querySelectorAll('.chip[data-filter]').forEach(x=>x.classList.toggle('active', x.dataset.filter===currentFilter));
+    const subMap = {
+      "all": "รวมงานค้างทั้งหมดไว้ที่เดียว ลากการ์ดเพื่อเปลี่ยนสถานะ",
+      "Digital Content": "เฉพาะงาน Digital Content",
+      "เอกสาร": "เฉพาะงานเอกสาร"
+    };
+    document.getElementById('pageSub').textContent = subMap[currentFilter];
+    render();
+  });
+});
+
+document.getElementById('searchBox').addEventListener('input', e=>{
+  searchTerm = e.target.value;
+  render();
+});
+
+loadTasks();
+</script>
+</body>
+</html>
