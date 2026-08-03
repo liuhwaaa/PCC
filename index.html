@@ -282,22 +282,25 @@ function futureDate(days){
   return d.toISOString().slice(0,10);
 }
 
-async function loadTasks(){
-  try{
-    const res = await window.storage.get('planner-tasks', false);
-    if(res && res.value){ tasks = JSON.parse(res.value); }
-    else { tasks = seedTasks(); await saveTasks(); }
-  }catch(e){
+// ส่วนใหม่ (ใช้ LocalStorage ของเบราว์เซอร์)
+function loadTasks(){
+  try {
+    const stored = localStorage.getItem('planner-tasks');
+    if (stored) {
+      tasks = JSON.parse(stored);
+    } else {
+      tasks = seedTasks(); // ถ้าไม่มีข้อมูลเก่า ให้สร้างข้อมูลตัวอย่าง
+      saveTasks();
+    }
+  } catch (e) {
     tasks = seedTasks();
   }
   render();
 }
-async function saveTasks(){
-  try{
-    await window.storage.set('planner-tasks', JSON.stringify(tasks), false);
-  }catch(e){ storageOk = false; }
-}
 
+function saveTasks(){
+  localStorage.setItem('planner-tasks', JSON.stringify(tasks));
+}
 function initials(name){
   if(!name) return "?";
   return name.trim().slice(0,2);
