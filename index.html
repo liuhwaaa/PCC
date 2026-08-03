@@ -3,10 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>แผนงาน Content + เอกสาร</title>
+<title>แผนงานส่วนตัว (Personal Planner)</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap');
-
   :root{
     --bg: #FFFFFF;
     --sidebar: #FBFBFA;
@@ -30,7 +29,6 @@
     -webkit-font-smoothing:antialiased;
   }
   .app{ display:flex; height:100vh; }
-
   /* ---------- Sidebar ---------- */
   .sidebar{
     width:230px; min-width:230px;
@@ -69,8 +67,15 @@
   .sidebar-foot{
     margin-top:auto; padding:10px 8px; font-size:11px; color:var(--text-light);
     border-top:1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
   }
-
+  .reset-btn {
+    background: none; border: none; color: #E03E3E; cursor: pointer; 
+    text-align: left; font-size: 11px; padding: 4px;
+  }
+  .reset-btn:hover { text-decoration: underline; }
   /* ---------- Main ---------- */
   .main{ flex:1; display:flex; flex-direction:column; min-width:0; }
   .topbar{
@@ -81,7 +86,6 @@
   .title-row{ display:flex; align-items:baseline; gap:10px; }
   .page-title{ font-size:22px; font-weight:700; }
   .page-sub{ font-size:12.5px; color:var(--text-light); margin-top:2px; }
-
   .filters{
     display:flex; gap:6px; padding:0 28px 14px 28px; align-items:center;
   }
@@ -97,7 +101,6 @@
     background:#fff;
   }
   .search:focus{ border-color:#B9B9B6; }
-
   /* ---------- Board ---------- */
   .board-wrap{ flex:1; overflow-x:auto; overflow-y:hidden; padding: 4px 28px 20px 28px; }
   .board{ display:flex; gap:16px; height:100%; min-height:0; }
@@ -118,7 +121,6 @@
   .cards{ flex:1; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-bottom:4px; }
   .cards::-webkit-scrollbar{ width:6px; }
   .cards::-webkit-scrollbar-thumb{ background:#DDDBD8; border-radius:3px; }
-
   .card{
     background:#fff; border:1px solid var(--border); border-radius:8px;
     padding:10px 12px; cursor:grab; box-shadow:var(--shadow);
@@ -147,13 +149,11 @@
     width:20px; height:20px; border-radius:50%; background:#EDEBFA; color:#6940A5;
     font-size:10px; font-weight:700; display:flex; align-items:center; justify-content:center;
   }
-
   .add-card-btn{
     font-size:12.5px; color:var(--text-light); padding:6px 6px; border-radius:6px;
     cursor:pointer; display:flex; align-items:center; gap:5px;
   }
   .add-card-btn:hover{ background:var(--hover); color:var(--text); }
-
   .quick-add{ display:none; flex-direction:column; gap:6px; background:#fff; border:1px solid var(--border);
     border-radius:8px; padding:8px; box-shadow:var(--shadow); }
   .quick-add.show{ display:flex; }
@@ -162,7 +162,6 @@
   .qa-btn{ font-size:12px; padding:4px 10px; border-radius:5px; border:none; cursor:pointer; font-weight:600; }
   .qa-btn.primary{ background:var(--text); color:#fff; }
   .qa-btn.ghost{ background:transparent; color:var(--text-light); }
-
   /* ---------- Modal ---------- */
   .overlay{
     position:fixed; inset:0; background:rgba(15,15,15,0.35);
@@ -194,16 +193,13 @@
     font-size:17px; font-weight:700; border:none; outline:none; font-family:inherit;
     padding:2px 0;
   }
-
   .empty-hint{ font-size:12px; color:var(--text-light); padding:8px 4px; }
 </style>
 </head>
 <body>
-
 <div class="app">
   <div class="sidebar">
-    <div class="workspace"><div class="dot"></div> แผนงานทีม</div>
-
+    <div class="workspace"><div class="dot"></div> แผนงานส่วนตัว</div>
     <div class="nav-section-label">มุมมอง</div>
     <div class="nav-item active" data-filter="all">
       <div class="left">📋 งานทั้งหมด</div><div class="count" id="count-all">0</div>
@@ -214,15 +210,15 @@
     <div class="nav-item" data-filter="เอกสาร">
       <div class="left">📄 งานเอกสาร</div><div class="count" id="count-doc">0</div>
     </div>
-
     <div class="nav-section-label">สรุป</div>
     <div class="nav-item" style="cursor:default;">
       <div class="left">🔴 เกินกำหนด</div><div class="count" id="count-overdue">0</div>
     </div>
-
-    <div class="sidebar-foot">ข้อมูลบันทึกอัตโนมัติในเบราว์เซอร์นี้</div>
+    <div class="sidebar-foot">
+      <span>ข้อมูลบันทึกในเบราว์เซอร์นี้</span>
+      <button class="reset-btn" onclick="resetData()">ล้างข้อมูลทั้งหมด</button>
+    </div>
   </div>
-
   <div class="main">
     <div class="topbar">
       <div>
@@ -230,25 +226,23 @@
         <div class="page-sub" id="pageSub">รวมงานค้างทั้งหมดไว้ที่เดียว ลากการ์ดเพื่อเปลี่ยนสถานะ</div>
       </div>
     </div>
-
     <div class="filters">
       <div class="chip active" data-filter="all">ทั้งหมด</div>
       <div class="chip" data-filter="Digital Content">🎬 Digital Content</div>
       <div class="chip" data-filter="เอกสาร">📄 เอกสาร</div>
       <input class="search" id="searchBox" placeholder="ค้นหางาน...">
     </div>
-
     <div class="board-wrap">
       <div class="board" id="board"></div>
     </div>
   </div>
 </div>
-
 <div class="overlay" id="overlay">
   <div class="modal" id="modal"></div>
 </div>
-
 <script>
+const STORAGE_KEY = 'personal-planner-data-v1';
+
 const STATUSES = [
   {key:"Backlog", label:"Backlog", color:"#B0AEAB"},
   {key:"กำลังทำ", label:"กำลังทำ", color:"#DFAB01"},
@@ -256,40 +250,39 @@ const STATUSES = [
   {key:"แก้ไข", label:"แก้ไข", color:"#E08A3D"},
   {key:"เสร็จแล้ว", label:"เสร็จแล้ว", color:"#4CAA57"},
 ];
-
 let tasks = [];
 let currentFilter = "all";
 let searchTerm = "";
 let draggedId = null;
-let storageOk = true;
 
 const uid = () => "t" + Math.random().toString(36).slice(2, 10);
 
 function seedTasks(){
   return [
     {id:uid(), title:"โพสต์โปรโมทแคมเปญเดือนสิงหาคม", type:"Digital Content", subtype:"Instagram Reels",
-     status:"กำลังทำ", priority:"สูง", assignee:"มด", dueDate: futureDate(3), notes:""},
+     status:"กำลังทำ", priority:"สูง", assignee:"ตัวเอง", dueDate: futureDate(3), notes:""},
     {id:uid(), title:"สรุปงบประมาณไตรมาส 3", type:"เอกสาร", subtype:"รายงาน",
-     status:"แก้ไข", priority:"สูง", assignee:"เบล", dueDate: futureDate(-1), notes:"รอข้อมูลจากบัญชี"},
+     status:"แก้ไข", priority:"สูง", assignee:"ตัวเอง", dueDate: futureDate(-1), notes:"รอข้อมูลจากบัญชี"},
     {id:uid(), title:"บทความ SEO หัวข้อ 'เทรนด์ปี 2026'", type:"Digital Content", subtype:"Website Article",
      status:"Backlog", priority:"กลาง", assignee:"", dueDate:"", notes:""},
     {id:uid(), title:"ร่างสัญญาผู้รับเหมาโครงการ A", type:"เอกสาร", subtype:"สัญญา",
-     status:"รอตรวจ", priority:"สูง", assignee:"บอส", dueDate: futureDate(1), notes:""},
+     status:"รอตรวจ", priority:"สูง", assignee:"ตัวเอง", dueDate: futureDate(1), notes:""},
   ];
 }
+
 function futureDate(days){
   const d = new Date(); d.setDate(d.getDate()+days);
   return d.toISOString().slice(0,10);
 }
 
-// ส่วนใหม่ (ใช้ LocalStorage ของเบราว์เซอร์)
+// --- Storage Functions (Fixed) ---
 function loadTasks(){
   try {
-    const stored = localStorage.getItem('planner-tasks');
+    const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
       tasks = JSON.parse(stored);
     } else {
-      tasks = seedTasks(); // ถ้าไม่มีข้อมูลเก่า ให้สร้างข้อมูลตัวอย่าง
+      tasks = seedTasks();
       saveTasks();
     }
   } catch (e) {
@@ -299,16 +292,28 @@ function loadTasks(){
 }
 
 function saveTasks(){
-  localStorage.setItem('planner-tasks', JSON.stringify(tasks));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(tasks));
 }
+
+function resetData() {
+  if(confirm("ต้องการล้างข้อมูลทั้งหมดหรือไม่? ข้อมูลจะหายไปถาวร")) {
+    localStorage.removeItem(STORAGE_KEY);
+    tasks = seedTasks();
+    saveTasks();
+    render();
+  }
+}
+
 function initials(name){
   if(!name) return "?";
   return name.trim().slice(0,2);
 }
+
 function isOverdue(t){
   if(!t.dueDate || t.status === "เสร็จแล้ว") return false;
   return new Date(t.dueDate) < new Date(new Date().toDateString());
 }
+
 function fmtDate(d){
   if(!d) return "";
   const dt = new Date(d);
@@ -328,18 +333,17 @@ function render(){
   document.getElementById('count-content').textContent = tasks.filter(t=>t.type==="Digital Content").length;
   document.getElementById('count-doc').textContent = tasks.filter(t=>t.type==="เอกสาร").length;
   document.getElementById('count-overdue').textContent = tasks.filter(isOverdue).length;
-
+  
   const board = document.getElementById('board');
   board.innerHTML = "";
   const list = filteredTasks();
-
+  
   STATUSES.forEach(st=>{
     const col = document.createElement('div');
     col.className = 'column';
     col.dataset.status = st.key;
-
     const colTasks = list.filter(t=>t.status===st.key);
-
+    
     col.innerHTML = `
       <div class="col-head">
         <span class="swatch" style="background:${st.color}"></span>
@@ -348,7 +352,7 @@ function render(){
       <div class="cards" data-status="${st.key}"></div>
       <div class="add-card-wrap"></div>
     `;
-
+    
     const cardsEl = col.querySelector('.cards');
     if(colTasks.length===0){
       const hint = document.createElement('div');
@@ -356,8 +360,9 @@ function render(){
       hint.textContent = 'ไม่มีงาน';
       cardsEl.appendChild(hint);
     }
+    
     colTasks.forEach(t=> cardsEl.appendChild(renderCard(t)));
-
+    
     // drag events on column
     cardsEl.addEventListener('dragover', e=>{
       e.preventDefault();
@@ -372,7 +377,7 @@ function render(){
         if(task){ task.status = st.key; saveTasks(); render(); }
       }
     });
-
+    
     // quick add
     const addWrap = col.querySelector('.add-card-wrap');
     const addBtn = document.createElement('div');
@@ -382,12 +387,13 @@ function render(){
     qa.className = 'quick-add';
     qa.innerHTML = `<input type="text" placeholder="ชื่องาน แล้วกด Enter..." />`;
     const qaInput = qa.querySelector('input');
-
+    
     addBtn.onclick = ()=>{
       addBtn.style.display='none';
       qa.classList.add('show');
       qaInput.focus();
     };
+    
     function commitAdd(){
       const val = qaInput.value.trim();
       if(val){
@@ -400,15 +406,15 @@ function render(){
         addBtn.style.display='flex';
       }
     }
+    
     qaInput.addEventListener('keydown', e=>{
       if(e.key==='Enter'){ commitAdd(); }
       if(e.key==='Escape'){ qa.classList.remove('show'); addBtn.style.display='flex'; }
     });
     qaInput.addEventListener('blur', ()=> setTimeout(commitAdd, 100));
-
+    
     addWrap.appendChild(addBtn);
     addWrap.appendChild(qa);
-
     board.appendChild(col);
   });
 }
@@ -418,14 +424,14 @@ function renderCard(t){
   card.className = 'card';
   card.draggable = true;
   card.dataset.id = t.id;
-
+  
   const typeTag = t.type === "Digital Content"
     ? `<span class="tag content">🎬 Content${t.subtype ? " · "+escapeHtml(t.subtype) : ""}</span>`
     : `<span class="tag doc">📄 เอกสาร${t.subtype ? " · "+escapeHtml(t.subtype) : ""}</span>`;
-
+    
   const pClass = t.priority === "สูง" ? "p-high" : t.priority === "ต่ำ" ? "p-low" : "p-mid";
   const overdue = isOverdue(t);
-
+  
   card.innerHTML = `
     <div class="card-title">${escapeHtml(t.title)}</div>
     <div class="tag-row">${typeTag}</div>
@@ -435,11 +441,11 @@ function renderCard(t){
       ${t.assignee ? `<span class="assignee">${escapeHtml(initials(t.assignee))}</span>` : '<span></span>'}
     </div>
   `;
-
+  
   card.addEventListener('dragstart', ()=>{ draggedId = t.id; card.classList.add('dragging'); });
   card.addEventListener('dragend', ()=>{ draggedId = null; card.classList.remove('dragging'); });
   card.addEventListener('click', ()=> openModal(t.id));
-
+  
   return card;
 }
 
@@ -451,9 +457,10 @@ function escapeHtml(s){
 function openModal(id){
   const t = tasks.find(x=>x.id===id);
   if(!t) return;
+  
   const overlay = document.getElementById('overlay');
   const modal = document.getElementById('modal');
-
+  
   modal.innerHTML = `
     <input class="modal-title-input" id="m-title" value="${escapeHtml(t.title)}" />
     <div class="row2">
@@ -504,9 +511,9 @@ function openModal(id){
       <button class="btn primary" id="m-save">บันทึก</button>
     </div>
   `;
-
+  
   overlay.classList.add('show');
-
+  
   document.getElementById('m-save').onclick = ()=>{
     t.title = document.getElementById('m-title').value.trim() || t.title;
     t.type = document.getElementById('m-type').value;
@@ -520,6 +527,7 @@ function openModal(id){
     closeModal();
     render();
   };
+  
   document.getElementById('m-delete').onclick = ()=>{
     tasks = tasks.filter(x=>x.id!==id);
     saveTasks();
@@ -527,12 +535,15 @@ function openModal(id){
     render();
   };
 }
+
 function closeModal(){
   document.getElementById('overlay').classList.remove('show');
 }
+
 document.getElementById('overlay').addEventListener('click', e=>{
   if(e.target.id === 'overlay') closeModal();
 });
+
 document.addEventListener('keydown', e=>{
   if(e.key === 'Escape') closeModal();
 });
@@ -543,6 +554,7 @@ document.querySelectorAll('.nav-item[data-filter], .chip[data-filter]').forEach(
     currentFilter = el.dataset.filter;
     document.querySelectorAll('.nav-item[data-filter]').forEach(x=>x.classList.toggle('active', x.dataset.filter===currentFilter));
     document.querySelectorAll('.chip[data-filter]').forEach(x=>x.classList.toggle('active', x.dataset.filter===currentFilter));
+    
     const subMap = {
       "all": "รวมงานค้างทั้งหมดไว้ที่เดียว ลากการ์ดเพื่อเปลี่ยนสถานะ",
       "Digital Content": "เฉพาะงาน Digital Content",
@@ -558,6 +570,7 @@ document.getElementById('searchBox').addEventListener('input', e=>{
   render();
 });
 
+// --- Init ---
 loadTasks();
 </script>
 </body>
